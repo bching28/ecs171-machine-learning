@@ -105,14 +105,14 @@ def stochasticGradient():
     prediction = 0
     vary = True
 
-    # Get batch of samples
-    batch_train_x, batch_train_y = unison_shuffled_copies(train_x, train_y)
-    batch_train_x = batch_train_x[0:batch]
-    batch_train_y = batch_train_y[0:batch]
-
     while (True):
         epoch += 1
         prediction = 0
+
+        # Get batch of samples
+        batch_train_x, batch_train_y = unison_shuffled_copies(train_x, train_y)
+        batch_train_x = batch_train_x[0:batch]
+        batch_train_y = batch_train_y[0:batch]
 
         # function to minimize
         yxw = batch_train_y * np.matmul(batch_train_x, np.transpose(train_w))
@@ -171,13 +171,13 @@ def LSVM():
     prediction = 0
     vary = True
 
-    batch_train_x, batch_train_y = unison_shuffled_copies(train_x, train_y)
-    batch_train_x = batch_train_x[0:batch]
-    batch_train_y = batch_train_y[0:batch]
-
     while (True):
         epoch += 1
         prediction = 0
+
+        batch_train_x, batch_train_y = unison_shuffled_copies(train_x, train_y)
+        batch_train_x = batch_train_x[0:batch]
+        batch_train_y = batch_train_y[0:batch]
 
         hinge_loss = 0
         for b in range(0, batch):
