@@ -102,10 +102,10 @@ def stochasticGradient():
     # initializing variables
     N = 10000
     batch = 1000
-    alpha = 0.0000001
+    alpha = 0.00001
     epoch = 0 # number of iterations
     prediction = 0
-    vary = False
+    vary = True
 
     while (True):
         epoch += 1
@@ -131,12 +131,12 @@ def stochasticGradient():
         # Problem 3d
         # conditions to vary the step size
         if (vary):
-            alpha = np.power(alpha, 1.0002)
+            alpha = np.power(alpha, 1.00005)
 
         #if (alpha < 0.000001 and vary):
         #    alpha = 0.000001
 
-        #print('%.15f' % alpha)
+        print('Alpha: %.20f' % alpha)
 
         train_w -= alpha * gradient
 
@@ -150,7 +150,7 @@ def stochasticGradient():
         norm_gradient = np.linalg.norm(gradient)
         print 'Epoch:', epoch, '|| Min Function:', min_function, '|| Accuracy:', train_accuracy, '|| Gradient:', np.sum(gradient), '|| Norm:', norm_gradient
 
-        if (train_accuracy > 98.0): # takes about 2000 epochs
+        if (train_accuracy > 98.0 and norm_gradient < 5):
             break
 
     test_w = train_w # passing in w for test...easier to follow
@@ -217,7 +217,7 @@ def LSVM():
         norm_gradient = np.linalg.norm(gradient)
         print 'Epoch:', epoch, '|| Min Function:', hinge_loss, '|| Accuracy:', train_accuracy, '|| Gradient:', np.sum(gradient), '|| Norm:', norm_gradient
 
-        if (train_accuracy > 98.0 and norm_gradient < 10 and epoch > 5000): # takes about 2000 epochs
+        if (train_accuracy > 98.0 and norm_gradient < 10 and epoch > 5000):
             break
 
     test_w = train_w # passing in w for test...easier to follow
