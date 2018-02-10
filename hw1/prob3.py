@@ -1,12 +1,5 @@
 import numpy as np
-from math import exp
 import time
-#import torch
-
-# load training data
-#x = torch.from_numpy(np.loadtxt('mnist_X_train.dat'))
-#w = torch.DoubleTensor(780,1).uniform_(-0.01, 0.01)
-#w = -0.01-0.01 * torch.rand(780,1) + 0.01
 
 # declaring global variables
 global train_w
@@ -26,6 +19,8 @@ train_y = np.loadtxt('mnist_y_train.dat')
 test_x = np.loadtxt('mnist_X_test.dat')
 test_y = np.loadtxt('mnist_y_test.dat')
 
+# I am using the unison shuffle provided from Stack Overflow
+# https://stackoverflow.com/questions/4601373/better-way-to-shuffle-two-numpy-arrays-in-unison
 def unison_shuffled_copies(a, b):
     assert len(a) == len(b)
     p = np.random.permutation(len(a))
@@ -54,12 +49,14 @@ def gradientDescent():
 
     # initializing variables
     N = 10000
+    d = 780
     alpha = 0.00001 # 0.00001 best alpha; should not go below 0.000001
     epoch = 0 # number of iterations
     prediction = 0
 
     # numerator of the gradient function
-    resize_y = np.transpose([train_y, ]*780)
+    # don't need to recalculate every time
+    resize_y = np.transpose([train_y, ]*d)
     gradient_yx = resize_y*train_x
 
     while (True):
@@ -69,7 +66,7 @@ def gradientDescent():
         min_function = np.sum( np.log( 1 + np.exp(-yxw) ) ) / N
 
         # computer gradient
-        resize_yxw = np.transpose([yxw, ]*780)
+        resize_yxw = np.transpose([yxw, ]*d)
         gradient = np.sum( np.divide(-gradient_yx, (1+np.exp(resize_yxw))), axis=0 ) / N
 
         train_w -= alpha * gradient
@@ -101,33 +98,34 @@ def stochasticGradient():
 
     # initializing variables
     N = 10000
+    d = 780
     batch = 1000
     alpha = 0.00001
     epoch = 0 # number of iterations
     prediction = 0
     vary = True
 
+    # Get batch of samples
+    batch_train_x, batch_train_y = unison_shuffled_copies(train_x, train_y)
+    batch_train_x = batch_train_x[0:batch]
+    batch_train_y = batch_train_y[0:batch]
+
     while (True):
         epoch += 1
         prediction = 0
 
-        batch_train_x, batch_train_y = unison_shuffled_copies(train_x, train_y)
-        batch_train_x = batch_train_x[0:batch]
-        batch_train_y = batch_train_y[0:batch]
-        #print 'X:', np.shape(batch_train_x)
-        #print 'Y:', np.shape(batch_train_y)
-        #time.sleep(10)
-
-        # numerator of the gradient function
-        resize_y = np.transpose([batch_train_y, ]*780)
-        gradient_yx = resize_y*batch_train_x
-
+        # function to minimize
         yxw = batch_train_y * np.matmul(batch_train_x, np.transpose(train_w))
         min_function = np.sum( np.log( 1 + np.exp(-yxw) ) ) / batch # not sure
 
+        # numerator of the gradient function
+        resize_y = np.transpose([batch_train_y, ]*d)
+        gradient_yx = resize_y*batch_train_x
+
         # computer gradient
-        resize_yxw = np.transpose([yxw, ]*780)
+        resize_yxw = np.transpose([yxw, ]*d)
         gradient = np.sum( np.divide(-gradient_yx, (1+np.exp(resize_yxw))), axis=0 ) / batch
+
         # Problem 3d
         # conditions to vary the step size
         if (vary):
@@ -147,7 +145,9 @@ def stochasticGradient():
                 prediction += -1
 
         train_accuracy = prediction / float(batch) * 100
+
         norm_gradient = np.linalg.norm(gradient)
+
         print 'Epoch:', epoch, '|| Min Function:', min_function, '|| Accuracy:', train_accuracy, '|| Gradient:', np.sum(gradient), '|| Norm:', norm_gradient
 
         if (train_accuracy > 98.0 and norm_gradient < 5):
@@ -171,13 +171,13 @@ def LSVM():
     prediction = 0
     vary = True
 
+    batch_train_x, batch_train_y = unison_shuffled_copies(train_x, train_y)
+    batch_train_x = batch_train_x[0:batch]
+    batch_train_y = batch_train_y[0:batch]
+
     while (True):
         epoch += 1
         prediction = 0
-
-        batch_train_x, batch_train_y = unison_shuffled_copies(train_x, train_y)
-        batch_train_x = batch_train_x[0:batch]
-        batch_train_y = batch_train_y[0:batch]
 
         hinge_loss = 0
         for b in range(0, batch):
