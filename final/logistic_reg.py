@@ -24,30 +24,34 @@ def createFiles():
     train_data = np.load('ecs171train.npy') #data[0,] is the column headers
     test_data = np.load('ecs171test.npy')
     size = train_data.size # 50001
-    #train_x = np.empty((0,770), int)
-    #test_x = np.empty((0,770), int)
     train_y = []
     test_y = []
+
+    #train_x = np.empty((0,770), int)
+    #test_x = np.empty((0,770), int)
 
     # open the files
     train_x_file = open("train_x.dat","a")
     test_x_file = open("test_x.dat","a")
+    train_y_file = open("train_y.dat","a")
+    test_y_file = open("test_y.dat","a")
     # the feature set
+
     for i in range(1,size):
         print i
 
         train_x_list = train_data[i,].split(",")
         train_x_list = train_x_list[:-1]
-        train_x_list = [float(a) if a != 'NA' else nan for a in train_x_list]
+        train_x_list = [float(a) if a != 'NA' else 0 for a in train_x_list]
         for item in train_x_list:
             train_x_file.write("%s " % item)
         train_x_file.write("\n")
         #train_x = np.append(train_x, np.array([train_x_list]), axis=0)
 
-        test_x_list = test_data[i,].split(",")
+        test_x_list = test_data[i-1,].split(",") # i-1 b/c test set doesn't have column headers
         test_x_list = test_x_list[:-1]
-        test_x_list = [float(b) if b != 'NA' else nan for b in test_x_list]
-        test_x_list.extend([0.0])
+        test_x_list = [float(b) if b != 'NA' else 0 for b in test_x_list]
+        #test_x_list.extend([0.0])s
         for item in test_x_list:
             test_x_file.write("%s " % item)
         test_x_file.write("\n")
@@ -58,6 +62,29 @@ def createFiles():
     test_x_file.close()
 
     print "Finished feature set"
+
+    # the loss column values
+    for i in range(1,size):
+        train_y_list = train_data[i,].split(",")
+        test_y_list = test_data[i-1,].split(",") # i-1 b/c test set doesn't have column headers
+        train_y.append(int(train_y_list[770]))
+        test_y.append(int(test_y_list[769])) # no loss col?
+
+    for item in train_y:
+        train_y_file.write("%s " % item)
+        train_y_file.write("\n")
+
+    for item in test_y: #DO WE EVEN HAVE A TEST SET LOSS COL?
+        test_y_file.write("%s " % item)
+        test_y_file.write("\n")
+
+    train_y_file.close()
+    test_y_file.close()
+    #train_y = np.array(train_y)
+    #test_y = np.array(test_y)
+    print "Finished output set"
+
+
 
 # I am using the unison shuffle provided from Stack Overflow
 # https://stackoverflow.com/questions/4601373/better-way-to-shuffle-two-numpy-arrays-in-unison
@@ -91,7 +118,7 @@ def stochasticGradient():
     N = 50000
     d = 770
     batch = 300
-    alpha = 0.00001
+    alpha = 0.001
     epoch = 0 # number of iterations
     prediction = 0
     vary = True
@@ -155,18 +182,10 @@ def stochasticGradient():
 
 # load the data as matrices
 train_x = np.loadtxt('train_x.dat')
+train_y = np.loadtxt('train_y.dat')
 test_x = np.loadtxt('test_x.dat')
+test_y = np.loadtxt('test_y.dat')
 
-# the loss column values
-for i in range(1,size):
-    train_y_list = train_data[i,].split(",")
-    test_y_list = test_data[i,].split(",")
-    train_y.append(int(train_y_list[770]))
-    test_y.append(int(test_y_list[769]))
-train_y = np.array(train_y)
-test_y = np.array(test_y)
-
-print "Finished output set"
 
 print train_x.shape
 print test_x.shape
