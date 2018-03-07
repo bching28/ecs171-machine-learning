@@ -9,38 +9,55 @@ global test_x
 global test_y
 np.set_printoptions(threshold='nan')
 
-train_data = np.load('ecs171train.npy') #data[0,] is the column headers
-size = train_data.size # 50001
-train_x = np.empty((0,770), int)
-train_y = []
+nan = float("NaN") # defining nan
 
-# the feature set
-for i in range(1,size):
-    print i
-    x_list = train_data[i,].split(",")
-    x_list = x_list[:-1]
-    x_list = [float(i) if i != 'NA' else None for i in x_list]
-    train_x = np.append(train_x, np.array([x_list]), axis=0)
-
-
-# the loss column values
-for i in range(1,size):
-    my_list = datrain_datata[i,].split(",")
-    train_y.append(int(my_list[770]))
-
-print train_x.shape
-
-'''
 # initializing weights with uniform distribution
 # from -0.01 to +0.01
-train_w = np.random.uniform(-0.01, 0.01, 780)
-# importing training data
-train_x = np.loadtxt('mnist_X_train.dat')
-train_y = np.loadtxt('mnist_y_train.dat')
+train_w = np.random.uniform(-0.01, 0.01, 770)
 
-#importing testing data
-test_x = np.loadtxt('mnist_X_test.dat')
-test_y = np.loadtxt('mnist_y_test.dat')
+def createFiles():
+    global train_x
+    global train_y
+    global test_x
+    global test_y
+
+    train_data = np.load('ecs171train.npy') #data[0,] is the column headers
+    test_data = np.load('ecs171test.npy')
+    size = train_data.size # 50001
+    #train_x = np.empty((0,770), int)
+    #test_x = np.empty((0,770), int)
+    train_y = []
+    test_y = []
+
+    # open the files
+    train_x_file = open("train_x.dat","a")
+    test_x_file = open("test_x.dat","a")
+    # the feature set
+    for i in range(1,size):
+        print i
+
+        train_x_list = train_data[i,].split(",")
+        train_x_list = train_x_list[:-1]
+        train_x_list = [float(a) if a != 'NA' else nan for a in train_x_list]
+        for item in train_x_list:
+            train_x_file.write("%s " % item)
+        train_x_file.write("\n")
+        #train_x = np.append(train_x, np.array([train_x_list]), axis=0)
+
+        test_x_list = test_data[i,].split(",")
+        test_x_list = test_x_list[:-1]
+        test_x_list = [float(b) if b != 'NA' else nan for b in test_x_list]
+        test_x_list.extend([0.0])
+        for item in test_x_list:
+            test_x_file.write("%s " % item)
+        test_x_file.write("\n")
+        #test_x = np.append(test_x, np.array([test_x_list]), axis=0)
+
+    # close the files
+    train_x_file.close()
+    test_x_file.close()
+
+    print "Finished feature set"
 
 # I am using the unison shuffle provided from Stack Overflow
 # https://stackoverflow.com/questions/4601373/better-way-to-shuffle-two-numpy-arrays-in-unison
@@ -62,55 +79,6 @@ def testDataAccuracy(test_w, test_x, test_y, alpha):
 
     print 'Accuracy of test data:', test_accuracy, "with a step size of", alpha
 
-def gradientDescent():
-    # declaring global variables
-    global train_w
-    global train_x
-    global train_y
-    global test_x
-    global test_y
-
-    # initializing variables
-    N = 10000
-    d = 780
-    alpha = 0.00001 # 0.00001 best alpha; should not go below 0.000001
-    epoch = 0 # number of iterations
-    prediction = 0
-
-    # numerator of the gradient function
-    # don't need to recalculate every time
-    resize_y = np.transpose([train_y, ]*d)
-    gradient_yx = resize_y*train_x
-
-    while (True):
-        epoch += 1
-        prediction = 0
-        yxw = train_y * np.matmul(train_x, np.transpose(train_w))
-        min_function = np.sum( np.log( 1 + np.exp(-yxw) ) ) / N
-
-        # computer gradient
-        resize_yxw = np.transpose([yxw, ]*d)
-        gradient = np.sum( np.divide(-gradient_yx, (1+np.exp(resize_yxw))), axis=0 ) / N
-
-        train_w -= alpha * gradient
-
-        for n in range(0, N):
-            if (np.sign(np.matmul(train_x[n], np.transpose(train_w))) == train_y[n]):
-                prediction += 1
-            else:
-                prediction += -1
-
-        train_accuracy = prediction / float(N) * 100
-
-        norm_gradient = np.linalg.norm(gradient)
-        print 'Epoch:', epoch, '|| Min Function:', min_function, '|| Accuracy:', train_accuracy, '|| Gradient:', np.sum(gradient), '|| Norm:', norm_gradient
-
-        if (train_accuracy > 99.0 and norm_gradient < 1): # takes about 2000 epochs
-            break
-
-    test_w = train_w # passing in w for test...easier to follow
-    testDataAccuracy(test_w, test_x, test_y, alpha)
-
 def stochasticGradient():
     # declaring global variables
     global train_w
@@ -120,13 +88,16 @@ def stochasticGradient():
     global test_y
 
     # initializing variables
-    N = 10000
-    d = 780
-    batch = 1000
+    N = 50000
+    d = 770
+    batch = 300
     alpha = 0.00001
     epoch = 0 # number of iterations
     prediction = 0
     vary = True
+
+    print train_x.shape
+    print train_y.shape
 
     while (True):
         epoch += 1
@@ -179,77 +150,25 @@ def stochasticGradient():
     test_w = train_w # passing in w for test...easier to follow
     testDataAccuracy(test_w, test_x, test_y, alpha)
 
-def LSVM():
-    # declaring global variables
-    global train_w
-    global train_x
-    global train_y
-    global test_x
-    global test_y
 
-    N = 10000
-    batch = 1000
-    alpha = 0.00001
-    epoch = 0 # number of iterations
-    prediction = 0
-    vary = True
+#createFiles()
 
-    while (True):
-        epoch += 1
-        prediction = 0
+# load the data as matrices
+train_x = np.loadtxt('train_x.dat')
+test_x = np.loadtxt('test_x.dat')
 
-        batch_train_x, batch_train_y = unison_shuffled_copies(train_x, train_y)
-        batch_train_x = batch_train_x[0:batch]
-        batch_train_y = batch_train_y[0:batch]
+# the loss column values
+for i in range(1,size):
+    train_y_list = train_data[i,].split(",")
+    test_y_list = test_data[i,].split(",")
+    train_y.append(int(train_y_list[770]))
+    test_y.append(int(test_y_list[769]))
+train_y = np.array(train_y)
+test_y = np.array(test_y)
 
-        hinge_loss = 0
-        for b in range(0, batch):
-            one_row_yxw = batch_train_y[b] * np.matmul(batch_train_x[b], np.transpose(train_w))
-            if (one_row_yxw < 1):
-                hinge_loss += 1-one_row_yxw
-            elif (one_row_yxw > 1):
-                hinge_loss += 0
-        hinge_loss /= batch
+print "Finished output set"
 
-        gradient = 0
-        for b in range(0, batch):
-            one_row_yxw = batch_train_y[b] * np.matmul(batch_train_x[b], np.transpose(train_w))
-            if (one_row_yxw < 1):
-                gradient += (-batch_train_y[b] * batch_train_x[b])
-            elif (one_row_yxw > 1):
-                gradient += 0
-        gradient /= batch
-
-        if (vary):
-            alpha = np.power(alpha, 1.00015)
-
-        #if (alpha < 0.000000001 and vary): # needs to be super low for this problem
-        #    alpha = 0.000000001
-        print('Alpha: %.20f' % alpha)
-
-        train_w -= alpha * gradient
-
-        for b in range(0, batch):
-            if (np.sign(np.matmul(batch_train_x[b], np.transpose(train_w))) == batch_train_y[b]):
-                prediction += 1
-            else:
-                prediction += -1
-
-        train_accuracy = prediction / float(batch) * 100
-
-        norm_gradient = np.linalg.norm(gradient)
-        print 'Epoch:', epoch, '|| Min Function:', hinge_loss, '|| Accuracy:', train_accuracy, '|| Gradient:', np.sum(gradient), '|| Norm:', norm_gradient
-
-        if (train_accuracy > 98.0 and norm_gradient < 10 and epoch > 5000):
-            break
-
-    test_w = train_w # passing in w for test...easier to follow
-    testDataAccuracy(test_w, test_x, test_y, alpha)
-
-
-#gradientDescent()
+print train_x.shape
+print test_x.shape
 
 stochasticGradient()
-
-#LSVM()
-'''
